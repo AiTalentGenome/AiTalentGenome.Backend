@@ -277,9 +277,9 @@ public class HeadHunterProvider : IHeadHunterProvider
 
         // 2. Устанавливаем "правильный" заголовок
         // ВАЖНО: Напиши здесь реально уникальное имя и свою почту
-        var appName = "HHRankAnalyzer-Suleymenov"; // Уникальное имя
+        var appName = "ai-talent-genome"; // Уникальное имя
         var appVersion = "1.0";
-        var contact = "suleymenov.janserik@gmail.com"; // Твоя реальная почта
+        var contact = "thirty.sixth@yandex.ru"; // Твоя реальная почта
 
         request.Headers.Add("User-Agent", $"{appName}/{appVersion} ({contact})");
 
@@ -287,6 +287,10 @@ public class HeadHunterProvider : IHeadHunterProvider
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await _httpClient.SendAsync(request, ct);
+        
+        var jsonString = await response.Content.ReadAsStringAsync(ct);
+        
+        _logger.LogInformation("RAW HH DATA: {Json}", jsonString);
 
         if (!response.IsSuccessStatusCode)
         {

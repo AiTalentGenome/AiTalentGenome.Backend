@@ -13,21 +13,19 @@ using System.Text;
 namespace ResumeAnalyzer.Application.Notes.Auth.Handlers
 {
     public class AuthExchangeHandler(
-    IHeadHunterProvider hhProvider,
-    IAppDbContext context,
-    ILogger<AuthExchangeHandler> logger)
-    : IRequestHandler<AuthExchangeCommand, AuthExchangeResult>
+        IHeadHunterProvider hhProvider,
+        IAppDbContext context,
+        ILogger<AuthExchangeHandler> logger)
+        : IRequestHandler<AuthExchangeCommand, AuthExchangeResult>
     {
         public async Task<AuthExchangeResult> Handle(AuthExchangeCommand request, CancellationToken ct)
         {
-            // 1. Обмен токена и получение профиля
             var accessToken = await hhProvider.ExchangeCodeForTokenAsync(request.Code, ct);
             var hhProfile = await hhProvider.GetUserInfoAsync(accessToken, ct);
 
             if (hhProfile.Employer == null)
                 throw new Exception("Аккаунт не привязан к компании.");
 
-            // 2. Работа с Компанией (SaaS логика)
             var company = await context.Companies
                 .FirstOrDefaultAsync(c => c.HhEmployerId == hhProfile.Employer.Id, ct);
 
@@ -37,25 +35,40 @@ namespace ResumeAnalyzer.Application.Notes.Auth.Handlers
                 {
                     HhEmployerId = hhProfile.Employer.Id,
                     Name = hhProfile.Employer.Name,
-                    IsActive = true
+                    IsActive = true,
+                    SubscriptionExpiresAt = DateTime.UtcNow.AddDays(30) // Твой триал
                 };
                 context.Companies.Add(company);
             }
+            else
+            {
+                company.Name = hhProfile.Employer.Name;
+            }
 
-            // Проверка блокировки
             if (!company.IsActive || (company.SubscriptionExpiresAt < DateTime.UtcNow))
                 return new AuthExchangeResult(accessToken, false, "Доступ заблокирован.");
 
-            // 3. Работа с Пользователем
             var user = await context.Users.FirstOrDefaultAsync(u => u.HhUserId == hhProfile.Id, ct);
+
             if (user == null)
             {
                 context.Users.Add(new AppUser
                 {
                     HhUserId = hhProfile.Id,
                     CompanyId = company.Id,
-                    Email = hhProfile.Email
+                    Email = hhProfile.Email,
+                    FirstName = hhProfile.FirstName, 
+                    LastName = hhProfile.LastName, 
+                    MiddleName = hhProfile.MiddleName,
+                    Position = "Менеджер" 
                 });
+            }
+            else
+            {
+                user.Email = hhProfile.Email;
+                user.FirstName = hhProfile.FirstName;
+                user.LastName = hhProfile.LastName;
+                user.MiddleName = hhProfile.MiddleName;
             }
 
             await context.SaveChangesAsync(ct);

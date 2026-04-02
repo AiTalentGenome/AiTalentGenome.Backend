@@ -1,12 +1,9 @@
 ﻿using MediatR;
-using ResumeAnalyzer.Application.Notes.Analysis.Queries;
+using ResumeAnalyzer.Application.Notes.Auth.Queries;
 using ResumeAnalyzer.Domain.Interfaces;
 using ResumeAnalyzer.Domain.Interfaces.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace ResumeAnalyzer.Application.Notes.Analysis.Handlers
+namespace ResumeAnalyzer.Application.Notes.Auth.Handlers
 {
     public class GetUserInfoHandler(IHeadHunterProvider hhProvider)
     : IRequestHandler<GetUserInfoQuery, HhUserResponse>

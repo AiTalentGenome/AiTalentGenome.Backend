@@ -11,19 +11,22 @@ public class HhAuthMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        // Проверяем только запросы к API (исключая логин/exchange)
-        if (context.Request.Path.StartsWithSegments("/api/Analysis"))
+        var path = context.Request.Path;
+
+        // Проверяем все запросы к API, кроме обмена кода на токен (exchange)
+        // и, возможно, страницы логина
+        if (path.StartsWithSegments("/api") && !path.StartsWithSegments("/api/Auth/exchange"))
         {
             var token = context.Request.Cookies["hh_access_token"];
 
             if (string.IsNullOrEmpty(token))
             {
+                // Если токена нет, а мы пытаемся зайти в защищенную зону
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 await context.Response.WriteAsJsonAsync(new { error = "Сессия истекла. Требуется авторизация." });
                 return;
             }
 
-            // Добавляем токен в Items, чтобы контроллер мог его легко достать
             context.Items["HhToken"] = token;
         }
 

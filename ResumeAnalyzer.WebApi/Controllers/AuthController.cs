@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ResumeAnalyzer.Application.Notes.Auth.Commands;
+using ResumeAnalyzer.Application.Notes.Auth.Queries;
 using ResumeAnalyzer.Domain.Entities;
 using ResumeAnalyzer.Domain.Entities.BusinessModels;
 using ResumeAnalyzer.Domain.Interfaces;
@@ -12,7 +13,7 @@ namespace ResumeAnalyzer.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")] // Теперь путь будет api/Auth
-public class AuthController(IMediator mediator) : ControllerBase
+public class AuthController(IMediator mediator) : BaseHhController
 {
     [HttpPost("exchange")]
     public async Task<IActionResult> Exchange([FromBody] ExchangeRequest request, CancellationToken ct)
@@ -32,6 +33,13 @@ public class AuthController(IMediator mediator) : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetUserInfo(CancellationToken ct)
+    {
+        var userInfo = await mediator.Send(new GetUserInfoQuery(HhToken), ct);
+        return Ok(userInfo);
     }
 
     [HttpPost("logout")]

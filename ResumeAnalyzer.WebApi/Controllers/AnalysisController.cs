@@ -56,13 +56,6 @@ public class AnalysisController(IMediator mediator) : BaseHhController
         return Ok(result.Candidates);
     }
 
-    [HttpGet("me")]
-    public async Task<IActionResult> GetUserInfo(CancellationToken ct)
-    {
-        var userInfo = await mediator.Send(new GetUserInfoQuery(HhToken), ct);
-        return Ok(userInfo);
-    }
-
     [HttpGet("vacancies/{vacancyId}/collections")]
     public async Task<IActionResult> GetCollections(string vacancyId, CancellationToken ct)
     {
